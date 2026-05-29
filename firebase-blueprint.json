@@ -1,0 +1,37 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique identifier" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "theme": { "type": "string", "enum": ["obsidian", "emerald", "sunset", "arctic"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of user preferences and metadata"
+    },
+    "/users/{userId}/messages/{messageId}": {
+      "schema": {
+        "title": "Message",
+        "type": "object",
+        "properties": {
+          "sender": { "type": "string", "enum": ["user", "zoya"] },
+          "text": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        },
+        "required": ["sender", "text", "timestamp"]
+      },
+      "description": "Historical chat messages for lifetime memory"
+    }
+  }
+}
