@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 
 type VisualizerState = "idle" | "listening" | "processing" | "speaking";
-type ThemeType = "obsidian" | "emerald" | "sunset" | "arctic";
+type ThemeType = "obsidian" | "emerald" | "sunset" | "arctic" | "nebula";
 
 interface VisualizerProps {
   state: VisualizerState;
@@ -9,149 +9,222 @@ interface VisualizerProps {
 }
 
 export default function Visualizer({ state, theme }: VisualizerProps) {
-  const getRingAnimation = (index: number, reverse: boolean = false) => {
-    const baseSpeed = state === "listening" ? 3 : state === "processing" ? 1.5 : state === "speaking" ? 2 : 15;
-    return {
-      rotate: reverse ? [-360, 0] : [0, 360],
-      transition: { duration: baseSpeed + index * 2, repeat: Infinity, ease: "linear" }
-    };
+  // Helper to get animation duration depending on state
+  const getSpeed = (base: number) => {
+    switch (state) {
+      case "listening": return base * 0.4;
+      case "processing": return base * 0.2;
+      case "speaking": return base * 0.6;
+      default: return base;
+    }
   };
 
-  const getPulseAnimation = () => {
-    if (state === "speaking") {
-      return {
-        scale: [1, 1.05, 0.98, 1.02, 1],
-        opacity: [0.8, 1, 0.8, 1, 0.8],
-        transition: { duration: 0.5, repeat: Infinity, ease: "easeInOut" }
-      };
-    }
-    if (state === "listening") {
-      return {
-        scale: [1, 1.02, 1],
-        opacity: [0.7, 1, 0.7],
-        transition: { duration: 1, repeat: Infinity, ease: "easeInOut" }
-      };
-    }
-    if (state === "processing") {
-      return {
-        scale: [0.98, 1.02, 0.98],
-        opacity: [0.6, 0.9, 0.6],
-        transition: { duration: 0.8, repeat: Infinity, ease: "linear" }
-      };
-    }
-    return {
-      scale: [1, 1.01, 1],
-      opacity: [0.4, 0.6, 0.4],
-      transition: { duration: 4, repeat: Infinity, ease: "easeInOut" }
-    };
-  };
-
-  // Color selection based on theme and state
   const getThemeColors = () => {
-    const colors: Record<ThemeType, { listening: string; processing: string; speaking: string; idle: string }> = {
+    const colors: Record<ThemeType, { 
+      primary: string; 
+      secondary: string; 
+      accent: string; 
+      glow: string;
+      colorHex: string;
+    }> = {
       obsidian: {
-        listening: "rgba(139, 92, 246, 1)", // violet
-        processing: "rgba(56, 189, 248, 1)", // sky
-        speaking: "rgba(236, 72, 153, 1)", // pink
-        idle: "rgba(6, 182, 212, 0.8)" // cyan
+        primary: "rgba(139, 92, 246, 1)", // Violet (ZOYA: Obsidian)
+        secondary: "rgba(219, 39, 119, 1)", // Pink
+        accent: "rgba(34, 211, 238, 1)", // Cyan
+        glow: "rgba(139, 92, 246, 0.4)",
+        colorHex: "#8b5cf6"
       },
       emerald: {
-        listening: "rgba(16, 185, 129, 1)", // emerald
-        processing: "rgba(20, 184, 166, 1)", // teal
-        speaking: "rgba(132, 204, 22, 1)", // lime
-        idle: "rgba(45, 212, 191, 0.8)" // teal
+        primary: "rgba(16, 185, 129, 1)", // Emerald (ZOYA: Emerald)
+        secondary: "rgba(20, 184, 166, 1)", // Teal
+        accent: "rgba(132, 204, 22, 1)", // Lime
+        glow: "rgba(16, 185, 129, 0.4)",
+        colorHex: "#10b981"
       },
       sunset: {
-        listening: "rgba(249, 115, 22, 1)", // orange
-        processing: "rgba(239, 68, 68, 1)", // red
-        speaking: "rgba(234, 179, 8, 1)", // yellow
-        idle: "rgba(251, 146, 60, 0.8)" // light orange
+        primary: "rgba(249, 115, 22, 1)", // Orange (ZOYA: Sunset)
+        secondary: "rgba(220, 38, 38, 1)", // Red
+        accent: "rgba(234, 179, 8, 1)", // Yellow
+        glow: "rgba(249, 115, 22, 0.4)",
+        colorHex: "#f97316"
       },
       arctic: {
-        listening: "rgba(14, 165, 233, 1)", // sky
-        processing: "rgba(99, 102, 241, 1)", // indigo
-        speaking: "rgba(125, 211, 252, 1)", // light blue
-        idle: "rgba(186, 230, 253, 0.8)" // ice
+        primary: "rgba(14, 165, 233, 1)", // Sky (ZOYA: Arctic)
+        secondary: "rgba(79, 70, 229, 1)", // Indigo
+        accent: "rgba(244, 114, 182, 1)", // Pink
+        glow: "rgba(14, 165, 233, 0.4)",
+        colorHex: "#0ea5e9"
+      },
+      nebula: {
+        primary: "rgba(217, 70, 239, 1)", // Fuchsia (ZOYA: Nebula)
+        secondary: "rgba(147, 51, 234, 1)", // Purple
+        accent: "rgba(129, 140, 248, 1)", // Indigo
+        glow: "rgba(217, 70, 239, 0.4)",
+        colorHex: "#d946ef"
       }
     };
-
-    const palette = colors[theme];
-    const color = palette[state] || palette.idle;
-    
-    // Generate glow and border colors (simplified for Tailwind compatibility)
-    let glowClass = "shadow-cyan-500/40";
-    let borderClass = "border-cyan-500/50";
-    
-    if (theme === "obsidian") {
-      glowClass = state === "listening" ? "shadow-violet-500/60" : state === "processing" ? "shadow-sky-400/80" : state === "speaking" ? "shadow-pink-500/80" : "shadow-cyan-500/40";
-      borderClass = state === "listening" ? "border-violet-400" : state === "processing" ? "border-sky-400" : state === "speaking" ? "border-pink-400" : "border-cyan-500/50";
-    } else if (theme === "emerald") {
-      glowClass = state === "listening" ? "shadow-emerald-500/60" : state === "processing" ? "shadow-teal-400/80" : state === "speaking" ? "shadow-lime-500/80" : "shadow-emerald-500/40";
-      borderClass = state === "listening" ? "border-emerald-400" : state === "processing" ? "border-teal-400" : state === "speaking" ? "border-lime-400" : "border-emerald-500/50";
-    } else if (theme === "sunset") {
-      glowClass = state === "listening" ? "shadow-orange-500/60" : state === "processing" ? "shadow-red-400/80" : state === "speaking" ? "shadow-yellow-500/80" : "shadow-orange-500/40";
-      borderClass = state === "listening" ? "border-orange-400" : state === "processing" ? "border-red-400" : state === "speaking" ? "border-yellow-400" : "border-orange-500/50";
-    } else if (theme === "arctic") {
-      glowClass = state === "listening" ? "shadow-sky-500/60" : state === "processing" ? "shadow-indigo-400/80" : state === "speaking" ? "shadow-sky-300/80" : "shadow-sky-400/40";
-      borderClass = state === "listening" ? "border-sky-400" : state === "processing" ? "border-indigo-400" : state === "speaking" ? "border-sky-200" : "border-sky-500/50";
-    }
-
-    return { color, glow: glowClass, border: borderClass };
+    return colors[theme];
   };
 
-  const themeColors = getThemeColors();
+  const tc = getThemeColors();
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
-      {/* Ambient Glow */}
+    <div className="relative w-72 h-72 md:w-[420px] md:h-[420px] flex items-center justify-center pointer-events-none select-none">
+      {/* Background Holographic Radar Lines */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:16px_16px] opacity-40 rounded-full" />
+      
+      {/* Laser HUD Scanning sweep */}
       <motion.div
-        animate={getPulseAnimation()}
-        className={`absolute w-[60%] h-[60%] rounded-full blur-[80px] ${themeColors.glow}`}
-        style={{ backgroundColor: themeColors.color, opacity: 0.15 }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: getSpeed(10), repeat: Infinity, ease: "linear" }}
+        className="absolute inset-2 md:inset-6 rounded-full border border-transparent origin-center opacity-20"
+        style={{
+          background: `conic-gradient(from 0deg, ${tc.primary} 0deg, transparent 90deg, transparent 360deg)`
+        }}
       />
 
-      {/* Ring 1: Massive Outer Dashed */}
+      {/* Outer Compass Tick Rings */}
       <motion.div
-        animate={getRingAnimation(4, false)}
-        className={`absolute w-[100%] h-[100%] rounded-full border-[1px] border-dashed ${themeColors.border} opacity-20`}
-      />
-
-      {/* Ring 2: Segmented Thick Ring */}
-      <motion.div
-        animate={getRingAnimation(3, true)}
-        className={`absolute w-[85%] h-[85%] rounded-full border-[2px] border-dotted ${themeColors.border} opacity-30`}
-      />
-
-      {/* Ring 3: Scanner Ring (Solid with gaps) */}
-      <motion.div
-        animate={getRingAnimation(2, false)}
-        className={`absolute w-[70%] h-[70%] rounded-full border-[1px] ${themeColors.border} border-t-transparent border-b-transparent opacity-40`}
-      />
-
-      {/* Ring 4: Inner Dashed */}
-      <motion.div
-        animate={getRingAnimation(1, true)}
-        className={`absolute w-[55%] h-[55%] rounded-full border-[2px] border-dashed ${themeColors.border} opacity-50`}
+        animate={{ rotate: -360 }}
+        transition={{ duration: getSpeed(40), repeat: Infinity, ease: "linear" }}
+        className="absolute w-full h-full rounded-full border border-dashed opacity-25"
+        style={{ borderColor: tc.primary, strokeWidth: "1px" }}
       />
       
-      {/* Ring 5: Core HUD Ring */}
+      {/* Outer Concentric Tech Target HUD */}
+      <svg className="absolute w-[105%] h-[105%] opacity-15" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="48" fill="none" stroke={tc.primary} strokeWidth="0.25" strokeDasharray="3 1" />
+        <circle cx="50" cy="50" r="46" fill="none" stroke={tc.primary} strokeWidth="0.1" />
+        <line x1="50" y1="0" x2="50" y2="100" stroke={tc.primary} strokeWidth="0.15" strokeDasharray="2 2" />
+        <line x1="0" y1="50" x2="100" y2="50" stroke={tc.primary} strokeWidth="0.15" strokeDasharray="2 2" />
+      </svg>
+
+      {/* Dual Rotating Gear Dials */}
       <motion.div
-        animate={getRingAnimation(0, false)}
-        className={`absolute w-[40%] h-[40%] rounded-full border-[4px] border-dotted ${themeColors.border} opacity-70`}
+        animate={{ rotate: 360 }}
+        transition={{ duration: getSpeed(14), repeat: Infinity, ease: "linear" }}
+        className="absolute w-[82%] h-[82%] rounded-full border-4 border-double opacity-20 flex items-center justify-center"
+        style={{ borderColor: tc.secondary }}
       />
 
-      {/* Core Circle */}
       <motion.div
-        animate={getPulseAnimation()}
-        className={`absolute w-[25%] h-[25%] rounded-full border-[1px] ${themeColors.border} bg-black/40 backdrop-blur-md flex items-center justify-center shadow-[inset_0_0_30px_rgba(0,0,0,0.5)]`}
-        style={{ boxShadow: `0 0 40px ${themeColors.color}, inset 0 0 30px ${themeColors.color}` }}
+        animate={{ rotate: -360 }}
+        transition={{ duration: getSpeed(24), repeat: Infinity, ease: "linear" }}
+        className="absolute w-[76%] h-[76%] rounded-full border opacity-30"
+        style={{ borderColor: tc.primary, borderStyle: "dotted", borderWidth: "2px" }}
+      />
+
+      {/* Orbiting Satellite Nodes */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: getSpeed(8), repeat: Infinity, ease: "linear" }}
+        className="absolute w-[68%] h-[68%] flex items-center justify-center"
       >
-        {/* Center Text */}
-        <div 
-          className="font-bold tracking-[0.3em] text-xl md:text-3xl lg:text-4xl text-white"
-          style={{ textShadow: `0 0 15px ${themeColors.color}, 0 0 30px ${themeColors.color}` }}
-        >
-          ZOYA
+        <div className="absolute top-0 w-3 h-3 rounded-full blur-[2px]" style={{ backgroundColor: tc.accent, boxShadow: `0 0 10px ${tc.accent}` }} />
+        <div className="absolute bottom-0 w-2 h-2 rounded-full blur-[1px]" style={{ backgroundColor: tc.primary, boxShadow: `0 0 8px ${tc.primary}` }} />
+      </motion.div>
+
+      {/* Inner Active Scanning Ring */}
+      <motion.div
+        animate={state === "listening" 
+          ? { scale: [1, 1.08, 1], opacity: [0.3, 0.7, 0.3] } 
+          : { scale: 1, opacity: 0.25 }
+        }
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute w-[58%] h-[58%] rounded-full border-2 border-dashed opacity-40"
+        style={{ borderColor: tc.accent }}
+      />
+
+      {/* Cognitive Processing Ring */}
+      <motion.div
+        animate={state === "processing"
+          ? { rotate: [0, 360], scale: [0.95, 1.05, 0.95] }
+          : { rotate: -180 }
+        }
+        transition={state === "processing"
+          ? { duration: 2, repeat: Infinity, ease: "linear" }
+          : { duration: 15, repeat: Infinity, ease: "easeInOut" }
+        }
+        className="absolute w-[46%] h-[46%] rounded-full border-2 border-dashed opacity-50"
+        style={{ borderColor: tc.primary, strokeDasharray: "20 5 5 5" }}
+      />
+
+      {/* Center Core Glass Bubble */}
+      <motion.div
+        animate={
+          state === "speaking"
+            ? { scale: [1, 1.03, 0.98, 1.02, 1], boxShadow: [`0 0 25px ${tc.glow}`, `0 0 45px ${tc.primary}`, `0 0 25px ${tc.glow}`] }
+            : state === "listening"
+            ? { scale: [1, 1.05, 1], boxShadow: [`0 0 15px ${tc.glow}`, `0 0 35px ${tc.accent}`, `0 0 15px ${tc.glow}`] }
+            : { scale: 1, boxShadow: `0 0 20px ${tc.glow}` }
+        }
+        transition={{ duration: state === "speaking" ? 0.6 : 2, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute w-[34%] h-[34%] rounded-full bg-[#03090d]/80 border-2 backdrop-blur-md flex flex-col items-center justify-center z-10"
+        style={{ 
+          borderColor: tc.primary,
+          boxShadow: `inset 0 0 20px ${tc.glow}`
+        }}
+      >
+        {/* Futuristic Grid inside Core */}
+        <div className="absolute inset-1 rounded-full bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:6px_6px] pointer-events-none opacity-50" />
+
+        {/* Dynamic Voice Line / Orb inside Center */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {state === "speaking" ? (
+            /* Sci-Fi Voice Bars */
+            <div className="flex items-center gap-1.5 h-10">
+              {[1, 2, 3, 4, 5].map((idx) => (
+                <motion.div
+                  key={idx}
+                  animate={{ height: ["12px", "32px", "12px"] }}
+                  transition={{ 
+                    duration: 0.4 + idx * 0.1, 
+                    repeat: Infinity, 
+                    ease: "easeInOut",
+                    delay: idx * 0.05
+                  }}
+                  className="w-1 rounded-full"
+                  style={{ backgroundColor: tc.accent }}
+                />
+              ))}
+            </div>
+          ) : state === "listening" ? (
+            /* Radar Sonar Ring expanding outwards */
+            <div className="relative w-full h-full flex items-center justify-center">
+              <motion.div
+                animate={{ scale: [0.2, 1.8], opacity: [1, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+                className="absolute w-12 h-12 rounded-full border-2"
+                style={{ borderColor: tc.accent }}
+              />
+              <motion.div
+                animate={{ scale: [0.2, 1.8], opacity: [0.8, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
+                className="absolute w-12 h-12 rounded-full border"
+                style={{ borderColor: tc.primary }}
+              />
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: tc.accent }} />
+            </div>
+          ) : state === "processing" ? (
+            /* Cyber spinning ring inside core */
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-8 h-8 rounded-full border-2 border-transparent border-t-current"
+              style={{ color: tc.accent }}
+            />
+          ) : (
+            /* Idle floating core */
+            <motion.div
+              animate={{ opacity: [0.4, 0.8, 0.4], scale: [0.92, 1.05, 0.92] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="w-5 h-5 rounded-full blur-[1px]"
+              style={{ 
+                backgroundColor: tc.primary,
+                boxShadow: `0 0 15px ${tc.primary}`
+              }}
+            />
+          )}
         </div>
       </motion.div>
     </div>
