@@ -3,5 +3,8 @@
   "description": "Zoya is a sassy, witty, and highly intelligent AI Voice Assistant.",
   "requestFramePermissions": [
     "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]
 }

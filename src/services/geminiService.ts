@@ -41,7 +41,7 @@ export async function getZoyaResponse(prompt: string, history: { sender: "user" 
       }
 
       chatSession = ai.chats.create({
-        model: "gemini-1.5-flash",
+        model: "gemini-3.5-flash",
         config: {
           systemInstruction,
           tools: [{
@@ -124,7 +124,7 @@ export async function getZoyaAudio(text: string): Promise<string | null> {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
+      model: "gemini-3.1-flash-tts-preview",
       contents: [{ parts: [{ text }] }],
       config: {
         responseModalities: ["AUDIO"],
