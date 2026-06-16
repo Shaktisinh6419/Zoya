@@ -43,7 +43,7 @@ service cloud.firestore {
              data.uid is string && data.uid.size() <= 128 &&
              data.email is string && data.email.size() <= 256 &&
              (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 100)) &&
-             (!('theme' in data) || (data.theme in ['obsidian', 'emerald', 'sunset', 'arctic']));
+             (!('theme' in data) || (data.theme in ['obsidian', 'emerald', 'sunset', 'arctic', 'nebula', 'stark', 'jarvis']));
     }
 
     match /users/{userId} {

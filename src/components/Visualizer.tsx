@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 
 type VisualizerState = "idle" | "listening" | "processing" | "speaking";
-type ThemeType = "obsidian" | "emerald" | "sunset" | "arctic" | "nebula";
+type ThemeType = "obsidian" | "emerald" | "sunset" | "arctic" | "nebula" | "stark";
 
 interface VisualizerProps {
   state: VisualizerState;
@@ -61,6 +61,13 @@ export default function Visualizer({ state, theme }: VisualizerProps) {
         accent: "rgba(129, 140, 248, 1)", // Indigo
         glow: "rgba(217, 70, 239, 0.4)",
         colorHex: "#d946ef"
+      },
+      stark: {
+        primary: "rgba(6, 182, 212, 1)", // Cyan (STARK HUD)
+        secondary: "rgba(37, 99, 235, 1)", // Blue
+        accent: "rgba(249, 115, 22, 1)", // Orange
+        glow: "rgba(6, 182, 212, 0.45)",
+        colorHex: "#06b6d4"
       }
     };
     return colors[theme];
